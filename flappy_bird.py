@@ -3,6 +3,8 @@ import pygame
 import time
 import os
 import random
+# pygame.init()
+pygame.font.init()
 
 WINDOW_WIDTH = 600
 WINDOW_HEIGHT = 800
@@ -15,6 +17,9 @@ BASE_IMG = pygame.transform.scale2x(
     pygame.image.load(os.path.join("imgs", "base.png")))
 BG_IMG = pygame.transform.scale2x(
     pygame.image.load(os.path.join("imgs", "bg.png")))
+
+STAT_FONT = pygame.font.SysFont("comicsans",50)
+
 
 
 class Bird:
@@ -66,7 +71,7 @@ class Bird:
 
         # if bird is moving upwards (d<0) or there's still space to go up then tilt bird upwards
         if d < 0 or self.y < self.height + 50:
-            if self.tilt < seld.MAX_ROTATION:
+            if self.tilt < self.MAX_ROTATION:
                 self.tilt = self.MAX_ROTATION
         else:  # tilt birds downwards
             if self.tilt > -90:
@@ -198,7 +203,7 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_window(window, bird, pipes, base):
+def draw_window(window, bird, pipes, base, score):
     # draw background image, blit is a method that draws
     # seond parameter is where you want to draw the image (top left position for the background image)
     window.blit(BG_IMG, (0, 0))
@@ -206,6 +211,9 @@ def draw_window(window, bird, pipes, base):
     # draw all the pipes
     for pipe in pipes:
         pipe.draw(window)
+
+    text = STAT_FONT.render("Score: "+str(score),1,(255,255,255))
+    window.blit(text, (WINDOW_WIDTH - 10 - text.get_width(),10))
 
     base.draw(window)
 
@@ -261,12 +269,15 @@ def main():
 
         for r in rem:
             pipes.remove(r)
+        
+        if birdd.y + birdd.img.get_height() >= 730:
+            #bird has hit the floor
+            pass
 
         # move the base
         base.move()
 
-        # draw everything
-        draw_window(window, birdd, pipes, base)
+        draw_window(window, birdd, pipes, base, score)
 
     pygame.quit()
     quit()
