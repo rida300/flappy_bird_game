@@ -203,10 +203,10 @@ def draw_window(window, bird, pipes, base):
     # seond parameter is where you want to draw the image (top left position for the background image)
     window.blit(BG_IMG, (0, 0))
 
-    #draw all the pipes
+    # draw all the pipes
     for pipe in pipes:
         pipe.draw(window)
-    
+
     base.draw(window)
 
     bird.draw(window)
@@ -214,10 +214,16 @@ def draw_window(window, bird, pipes, base):
 
 
 def main():
+
+    score = 0
     # create bird with starting position (200,200)
     birdd = Bird(230, 350)
     base = Base(730)
-    pipes = [Pipe(700)]
+
+    pipes = [Pipe(600)]
+    # this creates one single pipe which will move and make its way out of the frame eventually
+    # need to keep drawing pipes as long asgame is running
+
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     # setting up main loop to keep the game running
@@ -227,6 +233,39 @@ def main():
             if event.type == pygame.QUIT:  # clicking red X in the top right corner
                 run = False
 
+
+# make a list to add removed/ off screen pipes to
+        rem = []
+
+        add_pipe = False
+
+        # move pipes
+        for pipe in pipes:
+            if pipe.collide(birdd):
+                pass
+
+            if pipe.x + pipe.PIPE_TOP.get_width() < 0:
+                # means pipe is off the screen / out of frame now, new pipe needs drawn
+                # remove this pipe
+                rem.append(pipe)
+
+            if not pipe.passed and pipe.x < birdd.x:
+                pipe.passed = True
+                add_pipe = True
+
+            pipe.move()
+
+        if add_pipe:
+            score += 1
+            pipes.append(Pipe(600)) #600 is the x position from one pipe to another, if we want the pipes to be closer together, we can shorten this
+
+        for r in rem:
+            pipes.remove(r)
+
+        # move the base
+        base.move()
+
+        # draw everything
         draw_window(window, birdd, pipes, base)
 
     pygame.quit()
