@@ -119,7 +119,7 @@ class Pipe:
         self.height = 0
 
         self.top = 0  # where to draw the top of our pipe
-        self.bottom == 0  # where to draw bottom of pipe
+        self.bottom = 0  # where to draw bottom of pipe
         self.PIPE_TOP = pygame.transform.flip(
             PIPE_IMG, False, True)  # pipe top /UPSIDE_DOWN
         self.PIPE_BOTTOM = PIPE_IMG  # pipe bottom /UPRIGHT
@@ -127,44 +127,44 @@ class Pipe:
         self.passed = False  # indicates whether bird has already passed by this pipe
         self.set_height()
 
-    def self_height(self):
+    def set_height(self):
         # get random number for what the pipe heght should be
         self.height = random.randrange(0, 450)
-        self.top = self.height - self.PIPE_TOP
+        self.top = self.height - self.PIPE_TOP.get_height()
         self.bottom = self.height + self.GAP
 
-        def move(self):
-            self.x -= self.PIPE_VELOCITY
+    def move(self):
+        self.x -= self.PIPE_VELOCITY
 
-        def draw(self, win):  # draws both top and bottom pipe
-            win.blit(self.PIPE_TOP, (self.x, self.top))
-            win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
+    def draw(self, win):  # draws both top and bottom pipe
+        win.blit(self.PIPE_TOP, (self.x, self.top))
+        win.blit(self.PIPE_BOTTOM, (self.x, self.bottom))
 
-        def collide(self, bird):
-            bird_mask = bird.get_mask()
+    def collide(self, bird):
+        bird_mask = bird.get_mask()
 
-            # mask for top pipe (the box around top pipe's pixels)
-            top_mask = pygame.mask.from_surface(self.PIPE_TOP)
+        # mask for top pipe (the box around top pipe's pixels)
+        top_mask = pygame.mask.from_surface(self.PIPE_TOP)
 
-            # mask for bottom pipe (the box around bottom pipe's pixels)
-            bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
+        # mask for bottom pipe (the box around bottom pipe's pixels)
+        bottom_mask = pygame.mask.from_surface(self.PIPE_BOTTOM)
 
-            # calculate how far away these masks are from each other
-            # offset from bird to top pipe (distance between top pipe and bird)
-            top_offset = (self.x - bird.x, self.top - round(bird.y))
+        # calculate how far away these masks are from each other
+        # offset from bird to top pipe (distance between top pipe and bird)
+        top_offset = (self.x - bird.x, self.top - round(bird.y))
 
-            # offset from bird to bottom pipe (distance between bottom pipe and bird)
-            bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
+        # offset from bird to bottom pipe (distance between bottom pipe and bird)
+        bottom_offset = (self.x - bird.x, self.bottom - round(bird.y))
 
-            # point of overlap between the bird mask and the bottom pipe
-            b_point = bird_mask.overlap(bottom_mask, bottom_offset)
+        # point of overlap between the bird mask and the bottom pipe
+        b_point = bird_mask.overlap(bottom_mask, bottom_offset)
 
-            # point of overlap between the bird mask and the top pipe
-            t_point = bird_mask.overlap(top_mask, top_offset)
+        # point of overlap between the bird mask and the top pipe
+        t_point = bird_mask.overlap(top_mask, top_offset)
 
-            if t_point or b_point:
-                return True
-            return False
+        if t_point or b_point:
+            return True
+        return False
 
 
 class Base:
@@ -198,10 +198,16 @@ class Base:
         win.blit(self.IMG, (self.x2, self.y))
 
 
-def draw_window(window, bird):
+def draw_window(window, bird, pipes, base):
     # draw background image, blit is a method that draws
-    # top left position / where you want to draw the image
+    # seond parameter is where you want to draw the image (top left position for the background image)
     window.blit(BG_IMG, (0, 0))
+
+    #draw all the pipes
+    for pipe in pipes:
+        pipe.draw(window)
+    
+    base.draw(window)
 
     bird.draw(window)
     pygame.display.update()  # refresh the display
@@ -209,7 +215,9 @@ def draw_window(window, bird):
 
 def main():
     # create bird with starting position (200,200)
-    birdd = Bird(200, 200)
+    birdd = Bird(230, 350)
+    base = Base(730)
+    pipes = [Pipe(700)]
     window = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
 
     # setting up main loop to keep the game running
@@ -217,9 +225,9 @@ def main():
     while run:
         for event in pygame.event.get():  # loops through user events (e.g.: mouse click)
             if event.type == pygame.QUIT:  # clicking red X in the top right corner
-                run = false
+                run = False
 
-        draw_window(window, birdd)
+        draw_window(window, birdd, pipes, base)
 
     pygame.quit()
     quit()
