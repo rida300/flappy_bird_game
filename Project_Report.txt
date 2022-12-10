@@ -1,0 +1,101 @@
+AI Simulation for Flappy Bird
+This project consists of a Python script that constructs the elements and plays the Flappy bird game. It uses Python’s Neat (Neural Evolution of Augmenting Topology) module to create the AI to play the game efficiently.  
+When we first use AI to play Flappy bird, it has no knowledge of the rules of the game. We train it so it gradually gets better and eventually becomes unbeatable. 
+To configure the training sessions of our algorithm, we need to provide a configuration file for the NEAT module to use. This is a txt file where we set values for the variables mentioned below: 
+https://www.youtube.com/watch?v=MPFWsRjDmnU&list=PLzMcBGfZo4-lwGZWXz5Qgta_YNX3_vLS2&index=5  11:52
+ 
+Input and Output Values
+Neural Network’s input components. We are providing the NN with:
+i.	The distance between the bird and the top pipe.
+ii.	The distance between the bird and the bottom pipe
+This info allows our AI to make a decision for flappy to jump or to not jump. We assign weights to each input variable that indicates how much impact it has on the output. The algorithm calculates a weighted sum of the input variables and their corresponding weights. Then it adds a bias to the sum to shift the activation function towards a more correct direction. 
+
+
+
+
+
+
+
+
+ 
+	
+	
+
+
+
+
+
+
+
+
+Activation Function
+The activation function we use here is tanH so our output will remain between -1 and 1. We calculate the output like so:
+ tanH(a * weight A + b * weight B + c * weight C + bias)
+It is still unclear how the result of this equation is used to determine whether flappy should jump. This is because our algorithm isn’t trained enough yet. We start training it with random data and use natural selection to determine what caused each population of bird to survive the longest. We will refer to this this property as the fitness of the bird and at the end of each training session, the birds with the highest fitness are mutated and bred to form the population for the next session. We track situations in which jumping led to a higher score in the game and what the output value was in that situation. 
+ 
+Population Size
+Our population size is 100 birds per population. The larger the population size, the more situations are covered by our AI but as there aren’t too many complex scenarios in our use case, this is a reasonable size. 
+Referred to in the config file as pop_size.
+Fitness Function
+This function is significant in the success of our AI as it is responsible in determining what increases the bird’s fitness. If this is decided based upon an irrelevant data point, no matter how much we train our algorithm, it may never be successful. The parameter we use is how far to the right the bird has made it in the x direction. 
+Relevant variables in the config file:
+fitness_criterion: We can choose from “minimum”, “maximum”, or “mean” value of the fitness function. This is chosen based on which of the three values indicates the best performance by a bird. Therefore, in our case, we will choose maximum as that signifies the bird covering a greater distance in the x direction and will be advanced to the next generation.  
+fitness_threshold: Indicates the best possible performance to be reached before we terminate the game, meaning, if we’re currently training a population and there is a single bird in it with this fitness, we can terminate the program as we have successfully trained the algorithm. 
+Maximum Generations
+We have to set a limit on the number of populations we plan to train the algorithm with. We trained using 30 generations. 
+Species: A population is divided into species. Genomes that are similar and have the most intense competition among themselves; in other words, whose genomic distance is generally smaller (or lesser than a value provided for the compatibility_threshold) are considered to be in the same species.
+An approximate measure of the difference between genomes, used in dividing the population into species. For further discussion, see the NEAT Overview.
+
+DefaultGenome: Each member of the population (each bird) is referred to as a genome. Genomes have input and output nodes and these are linked via genes. We provide the starting point for each genome so each bird starts with the same 
+i.	activation_function: tanH is used consistently for all.
+ii.	activation_mutate_rate: If we wanted to switch up the activation function randomly, this numeric value would determine the percentage of that other function being used while training.
+iii.	 activation_options: Provides a list of activation function for activation_mutate_rate to alternate between. We only provide one function, tanH.
+ 
+Bias Options: Here we set initial values for the weights of each input node and a value for the bias to add to our weighted sum.
+
+bias_max_value and bias_min_value: provide limits for the bias so a random number between them can be chosen to test. 
+bias_mutate_power, bias_mutate_rate and bias_replace_rate: indicate how much to deviate from the previous bias when moving to a new generation of birds.
+conn_add_prob and conn_delete_prob: indicate the probability of adding/deleting new links between nodes.
+enabled_default: setting to true will enable all connectiosn from the start.
+enabled_mutate_rate: likelihood of a connection being deactivated during training.
+num_inputs: number of input nodes.
+num_outputs: number of output nodes.
+Species_fitness_func: this is similar to fitness_criterion and determines which values means the algorithm is succeeding, “minimum”, “maximum” or “mean”. It is maximum in our case.
+Max_stagnation: the number of generations we can go without the maximum fitness for a species of birds in a generation remaining constant. Once this number is hit, we must eliminate that species. 
+
+We have a function named ‘run’ that loads in this configuration file. To do this, we first need to get the current directory that our script is located in and then use that as a prefix for the config file’s name to form the complete path of the file.  All subheadings (distinguished by having square rackets around them in the config file) need to be defined while loading in the file so that our Neat module knows to use the specific values we provided for them.
+While the AI is training, there are logs being printed in the console. These are statistics generated through Neat’s statistic reporter. 
+Now we call run on the population we generated, again using Neat’s population function. This script runs the fitness function through 50 generations of genomes. In order to define a fitness function for Neat, we must provide it with two arguments, the collection of genomes, and the config.
+
+
+
+
+The code follows an object-oriented approach to create the pipes, the bird, and the floor of the game. To get started, it defines the height and width of the game screen. Then, it imports three images to illustrate the different positions of the bird as it flaps its wings and jumps between pipes. We also need to import some images for the top and bottom pipe, the green floor, and the blue background.
+
+
+Then it constructs the bird class and declares constants that determine how much the bird should rotate, its speed and how quickly it flaps its wings for. Then it defines constructor and method for the bird to jump. As we want the bird to move upwards on its jumps, and the game screen has a y-axis proceeding in the positive direction downwards, the velocity while going upwards is negative. We are keeping track of when the last jump was (more detail here) and the starting point of the jump.
+It defines a move method to which is called every single frame as the bird moves. It calculates the displacement using the simple distance formula with an addition to account for its gradual loss in vigor as the fall continues. This value is checked to ensure that the bird doesn’t jump high enough to go off the screen and if it is reasonable value, it is used to increase the bird’s height and determines whether the bird should tilt upwards if there’s bird still has room to go up or downwards otherwise.
+Then we draw the bird. We use the tick count (which is the number of seconds since the game has begun) to determine which of the three bird images should be displayed to create the flapping up and down animation. We then check if the bird has tilted downwards and if it is, we can put an end to the flapping motion and position the wings to be vertical instead of horizontal.
+Then we use pygame’s blit method to start drawing the images starting from the top left of the screen.
+Then we add a helper method (get_mask) to determine the surface areas of an object which if hit would qualify as a collision.
+We define a class to represent the pipes in our game. First, we define a constant ‘GAP’ to determine the distance between pipes and a ‘VEL’ constant to define he velocity at which the pipes will move. There’s a constructor for this class which takes in a variable to determine the x position of the pipe. The height of the pipe is randomly generated. We use one image for both top and bottom pipes and use pygame’s transform method to store an upside-down version of the upright pipe. We have a property on our pipe to determine if our bird has already passed this pipe.  A simple move method is used to shift such pipes to the left and eventually out of the frame.  
+Next, we build the method to catch collisions between our bird and pipe. We use masks to make our determination of the collision precise and accurate. We use masks to highlight the transparent background (called: mask) of an image (bird, or pipe) but even if the masks of two objects collide, we check to see whether the pixels of each object overlapped at all and only classify it as a collision if that happens. This overlapping is determined by comparing the 2D matrix of the objects. This method is placed in the Pipe class since we need to check if flappy has collided with each pipe.
+Next is the Base class that uses a single image to create an illusion of a never-ending animation. This has a simple draw method which draws two base images to be sued by the move method. Both images are horizontally adjacent to each other and continue to move in the x direction to the left of the screen until the first image slides off the screen and is replaced completely by the second image. The first image is cycled back to the end of the second image which Is now on the screen. 
+Finally, we have method to draw the game window and all its accessories. We begin by adding the blue background image, the base images, our flappy bird and then we have a loop to draw as many pipes as the user has requested. Then we update the display to reflect these changes. 
+We define a while loop to keep the bird moving at 30 fps and the move method determines how much the bird moves in each frame. This loop is contained within our main function.
+
+ We define a new bird and a game window in the main function and pass them along to the draw method mentioned right above here. We also need to call our base class’s move method here to ensure that we use the two images we had drawn to make it appear as though the base is moving. To make the pipes appear on the screen, we will need to loop through them and call the pipe class’s move method. To keep the run time at a reasonable value, we use the same loop to also determine if a pipe has collided with our bird. We do this simply by calling the collide method from our pipe class. 
+We also need to check if the pipe has travelled far enough to be off the screen and we add such pipes to a list and remove the contents of this list from the screen after we exit the loop.
+We have a third check to determine if flappy has passed a pipe successfully without colliding. As soon as this is true, we need to draw a new pipe so the game can go on and also increment the player’s score by 1.  
+
+ We also implement a clock set the frame rate to ensure that our game moves at a reasonable pace, one that gives the user a fair chance to play the game. We use a for loop to keep track of all events triggered by the user to ensure we can allow the user to quit the game.
+On https://www.youtube.com/watch?v=wQWWzBHUJWM&list=PLzMcBGfZo4-lwGZWXz5Qgta_YNX3_vLS2&index=6
+
+
+Watch https://www.youtube.com/watch?v=OGHA-elMrxI
+
+NEAT module documentation: https://neat-python.readthedocs.io/en/latest/config_file.html
+Docs to understand config file: https://neat-python.readthedocs.io/en/latest/neat_overview.html#neat-overview-label
+https://neat-python.readthedocs.io/en/latest/config_file.html#defaultspeciesset-section
+
+By Rida Ahmed
