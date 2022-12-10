@@ -63,9 +63,6 @@ num_outputs: number of output nodes.
 Species_fitness_func: this is similar to fitness_criterion and determines which values means the algorithm is succeeding, “minimum”, “maximum” or “mean”. It is maximum in our case.
 Max_stagnation: the number of generations we can go without the maximum fitness for a species of birds in a generation remaining constant. Once this number is hit, we must eliminate that species. 
 
-We have a function named ‘run’ that loads in this configuration file. To do this, we first need to get the current directory that our script is located in and then use that as a prefix for the config file’s name to form the complete path of the file.  All subheadings (distinguished by having square rackets around them in the config file) need to be defined while loading in the file so that our Neat module knows to use the specific values we provided for them.
-While the AI is training, there are logs being printed in the console. These are statistics generated through Neat’s statistic reporter. 
-Now we call run on the population we generated, again using Neat’s population function. This script runs the fitness function through 50 generations of genomes. In order to define a fitness function for Neat, we must provide it with two arguments, the collection of genomes, and the config.
 
 
 
@@ -81,14 +78,57 @@ Then we add a helper method (get_mask) to determine the surface areas of an obje
 We define a class to represent the pipes in our game. First, we define a constant ‘GAP’ to determine the distance between pipes and a ‘VEL’ constant to define he velocity at which the pipes will move. There’s a constructor for this class which takes in a variable to determine the x position of the pipe. The height of the pipe is randomly generated. We use one image for both top and bottom pipes and use pygame’s transform method to store an upside-down version of the upright pipe. We have a property on our pipe to determine if our bird has already passed this pipe.  A simple move method is used to shift such pipes to the left and eventually out of the frame.  
 Next, we build the method to catch collisions between our bird and pipe. We use masks to make our determination of the collision precise and accurate. We use masks to highlight the transparent background (called: mask) of an image (bird, or pipe) but even if the masks of two objects collide, we check to see whether the pixels of each object overlapped at all and only classify it as a collision if that happens. This overlapping is determined by comparing the 2D matrix of the objects. This method is placed in the Pipe class since we need to check if flappy has collided with each pipe.
 Next is the Base class that uses a single image to create an illusion of a never-ending animation. This has a simple draw method which draws two base images to be sued by the move method. Both images are horizontally adjacent to each other and continue to move in the x direction to the left of the screen until the first image slides off the screen and is replaced completely by the second image. The first image is cycled back to the end of the second image which Is now on the screen. 
-Finally, we have method to draw the game window and all its accessories. We begin by adding the blue background image, the base images, our flappy bird and then we have a loop to draw as many pipes as the user has requested. Then we update the display to reflect these changes. 
+Finally, we have method to draw the game window and all its accessories. We begin by adding the blue background image, the base images, collection of flappy birds and then we have a loop to draw as many pipes as requested by the caller. Then we update the display to reflect these changes. 
 We define a while loop to keep the bird moving at 30 fps and the move method determines how much the bird moves in each frame. This loop is contained within our main function.
 
- We define a new bird and a game window in the main function and pass them along to the draw method mentioned right above here. We also need to call our base class’s move method here to ensure that we use the two images we had drawn to make it appear as though the base is moving. To make the pipes appear on the screen, we will need to loop through them and call the pipe class’s move method. To keep the run time at a reasonable value, we use the same loop to also determine if a pipe has collided with our bird. We do this simply by calling the collide method from our pipe class. 
-We also need to check if the pipe has travelled far enough to be off the screen and we add such pipes to a list and remove the contents of this list from the screen after we exit the loop.
-We have a third check to determine if flappy has passed a pipe successfully without colliding. As soon as this is true, we need to draw a new pipe so the game can go on and also increment the player’s score by 1.  
+We have a function named ‘run’ that loads in this configuration file. To do this, we first need to get the current directory that our script is located in and then use that as a prefix for the config file’s name to form the complete path of the file.  All subheadings (distinguished by having square rackets around them in the config file) need to be defined while loading in the file so that our Neat module knows to use the specific values we provided for them.
+While the AI is training, there are logs being printed in the console. These are statistics generated through Neat’s statistic reporter and include data on each population’s:
+1.	Average fitness
+2.	Standard deviation of fitness among its members
+3.	 best fitness
+4.	Age of the population, i.e., how long it’s been running
+5.	Time it took to run each generation’s NN
+Now we call run on the population we generated, again using Neat’s population function. This script runs the fitness function through 50 generations of genomes. In order to define a fitness function for Neat, we must provide it with two arguments, the collection of genomes, and the config. 
+Since the game was designed to facilitate birds that go further, we can use main as out fitness function and pass it our population of genomes, this is a list of tuples: (genomeId, genome), and config.  
 
- We also implement a clock set the frame rate to ensure that our game moves at a reasonable pace, one that gives the user a fair chance to play the game. We use a for loop to keep track of all events triggered by the user to ensure we can allow the user to quit the game.
+ We define a new bird and a game window in the main function and pass them along to the draw method mentioned right above here. We also need to call our base class’s move method here to ensure that we use the two images we had drawn to make it appear as though the base is moving. 
+
+We use three lists to keep track of each bird, it’s neural network and its original genome.
+FOR each (genome_ID, genome) in genomes
+	Create a feed forward neural network for genome using Neat
+	Add this NN to the list of NN
+	Create a bird object for genome
+	Add bird to the list of birds
+	Assign an initial fitness of 0 to the genome
+	Add genome to the list of genomes
+ENDFOR
+We have a main for loop to keep the game running by regularly generating pipes. Additionally, to run through multiple birds at once, we loop through them within the previous loop. The following pseudo code explains this:
+FOR each pipe in pipes
+	FOR bird b in birds
+		If pipe and bird collide:
+ decrement the bird’s fitness by 1
+ remove bird from the birds list
+ remove the bird’s genome from the genome list
+ remove the bird’s NN from the NN list
+		If bird made it past the pipe:
+generate a new pipe
+increment score by 1
+increment the genome’s fitness by 5
+ 	If pipe has been left behind by the bird and is off the screen:
+remove that pipe
+	pipe.move() //draws the pipe	
+	ENDFOR
+ENDFOR
+To account for the very common scenario when there may be more than one pipe on the screen, we check if the current bird has passed a pipe to then set the current pipe as the next one. 
+
+
+FOR bird in birds
+	bird.move()
+	slightly increment bird’s fitness as it has been flying for a little while
+store the output of activating bird’s NN by providing it the three pieces of info (illustrated in figure above)
+	use the output to determine if bird jumps
+ENDFOR
+We also implement a clock set the frame rate to ensure that our game moves at a reasonable pace, one that gives the user a fair chance to play the game. We use a for loop to keep track of all events triggered by the user to ensure we can allow the user to quit the game.
 On https://www.youtube.com/watch?v=wQWWzBHUJWM&list=PLzMcBGfZo4-lwGZWXz5Qgta_YNX3_vLS2&index=6
 
 
